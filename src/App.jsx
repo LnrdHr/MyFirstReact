@@ -1,60 +1,144 @@
 import { useState } from "react"; //component uses state to 'remember', e.g. remember it got clicked
 
 //props are component's arguments
-function Square({ value, onSquareClick }) {
+function Square({ value, frozen, onSquareClick }) {
   return (
-    <button className="square" onClick={onSquareClick}>
+    <button
+      className="square"
+      onClick={onSquareClick}
+      onContextMenu={onSquareClick}
+    >
       {value}
     </button>
   );
 }
 
-function Board({ xIsNext, squares, onPlay }) {
-  function handleClick(i) {
-    //exit if the square is not empty or there is a winner already
-    if (squares[i] || calculateWinner(squares)) return;
-
-    //here we copy the currect squares into the nextSquares
+function Board({
+  xIsNext,
+  isFreezeClicked,
+  setIsFreezeClicked,
+  squares,
+  onPlay,
+}) {
+  function handleClick(i, e) {
     const nextSquares = squares.slice();
+    /*
+    check if the square is frozen(the square is frozen until it's clicked)
+    if so, your move is ignored and the game goes on
+     We unfreeze it for the future plays
+    */
+    if (squares[i].frozen === true) {
+      nextSquares[i] = { ...nextSquares[i], frozen: false };
+      onPlay(nextSquares);
+      return;
+    }
+
+    /*
+    check if the freezing mode is on(button triggered)
+    freeze the cell, change the state of setIsFreezeClicked to default false
+    and let your opponent play
+    */
+    if (isFreezeClicked) {
+      nextSquares[i] = { ...nextSquares[i], frozen: true };
+      setIsFreezeClicked(false);
+      onPlay(nextSquares);
+      return;
+    }
+
+    //exit if there is a winner already
+    if (calculateWinner(squares)) return;
+
+    //overwriting possible only if 2 squares are completed (avoiding possible infinite loop at the beggining)
+    const nonEmptySquares = squares.filter((sq) => sq !== null).length;
+    if (squares[i].value && nonEmptySquares < 3) return;
+
+    //you can't overwrite if the new placement makes the game over(no matter who wins)
+    const copySquares = squares.slice();
+    copySquares[i] = { ...copySquares[i], value: xIsNext ? "X" : "O" };
+
+    if (squares[i].value && calculateWinner(copySquares) !== null) return;
+
     /*
     Reasons React uses immutability to change data(i.e. we had to create a new array here):
     -keeping previous versions of the data and perhaps reusing them later
     -we can check if component's data has been changed
     */
-    if (xIsNext) {
-      nextSquares[i] = "X";
-    } else {
-      nextSquares[i] = "O";
-    }
-    onPlay(nextSquares);
 
-    const winner = calculateWinner(squares);
-    let status;
-    if (winner) {
-      status = "Winner: " + winner;
+    //event type "context menu" refers to right click on mouse
+    if (e.type === "contextmenu" && squares[i].value) {
+      //we are overwriting with empty square
+      nextSquares[i] = { ...nextSquares[i], value: null };
     } else {
-      status = "Next player: " + (xIsNext ? "X" : "O");
+      nextSquares[i] = { ...nextSquares[i], value: xIsNext ? "X" : "O" };
     }
+
+    //send modified squares to game component - game calls his onPlay handler -handlePlay
+    onPlay(nextSquares);
   }
-  //each div tag represents one row
-  //with an arrow function we make sure that when the square is clicked, the handler runs
+
+  const winner = calculateWinner(squares);
+  let status;
+  if (winner) {
+    status = "Winner: " + winner;
+    console.log(status);
+  } else {
+    status = "Next player: " + (xIsNext ? "X" : "O");
+  }
+
+  //rendering
   return (
     <>
       <div className="status">{status}</div>
       <div className="board-row">
-        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
-        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
-        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+        <Square
+          value={squares[0].value}
+          frozen={squares[0].frozen}
+          onSquareClick={(e) => handleClick(0, e)}
+        />
+        <Square
+          value={squares[1].value}
+          frozen={squares[1].frozen}
+          onSquareClick={(e) => handleClick(1, e)}
+        />
+        <Square
+          value={squares[2].value}
+          frozen={squares[2].frozen}
+          onSquareClick={(e) => handleClick(2, e)}
+        />
       </div>
       <div className="board-row">
-        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
-        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
-        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+        <Square
+          value={squares[3].value}
+          frozen={squares[3].frozen}
+          onSquareClick={(e) => handleClick(3, e)}
+        />
+        <Square
+          value={squares[4].value}
+          frozen={squares[4].frozen}
+          onSquareClick={(e) => handleClick(4, e)}
+        />
+        <Square
+          value={squares[5].value}
+          frozen={squares[5].frozen}
+          onSquareClick={(e) => handleClick(5, e)}
+        />
       </div>
       <div className="board-row">
-        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
-        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
-        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+        <Square
+          value={squares[6].value}
+          frozen={squares[6].frozen}
+          onSquareClick={(e) => handleClick(6, e)}
+        />
+        <Square
+          value={squares[7].value}
+          frozen={squares[7].frozen}
+          onSquareClick={(e) => handleClick(7, e)}
+        />
+        <Square
+          value={squares[8].value}
+          frozen={squares[8].frozen}
+          onSquareClick={(e) => handleClick(8, e)}
+        />
       </div>
     </>
   );
@@ -62,21 +146,40 @@ function Board({ xIsNext, squares, onPlay }) {
 
 export default function Game() {
   /*
-  history array here has only 1 item, and that is an array of 9 elements
+  history array is 2D, with each array being a replica of then current array
   setSomething = function to change the state of Something
   useState is used for initialising Something
   */
-  const [history, setHistory] = useState([Array(9).fill(null)]);
-  const [xIsNext, setXIsNext] = useState(true);
-  const currentSquares = history[history.length - 1];
+  const [history, setHistory] = useState([
+    Array(9).fill({ value: null, frozen: false }),
+  ]);
+
+  const [isFreezeClicked, setIsFreezeClicked] = useState(false);
+
+  //keeping track of which step the user is currently viewing
+  const [currentMove, setCurrentMove] = useState(0);
+
+  const xIsNext = currentMove % 2 == 0;
+
+  //rendering the currently selected move
+  const currentSquares = history[currentMove];
 
   function handlePlay(nextSquares) {
-    setHistory([...history, nextSquares]);
-    setXIsNext(!xIsNext);
+    /*
+      when we "go back" in history, we want to erase the "future" we have 
+      already been to
+    */
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
   }
 
   function jumpTo(nextMove) {
-    //TODO
+    setCurrentMove(nextMove);
+  }
+
+  function handleFreezeButtonClick() {
+    setIsFreezeClicked(true);
   }
 
   const moves = history.map((squares, move) => {
@@ -87,22 +190,40 @@ export default function Game() {
       description = "Go to game start";
     }
 
+    /*
+      Keys tell React the identity of list's item to differentiate him from others.
+      Lists are dynamic and they change, so when a list is re-rendered,
+      React compares current list's key and previous list's key
+    */
+
     return (
-      <li>
+      <li key={move}>
         <button onClick={() => jumpTo(move)}>{description}</button>
       </li>
     );
   });
 
   return (
-    <div className="game">
-      <div className="game-board">
-        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+    <>
+      <div className="game">
+        <div className="game-board">
+          <Board
+            xIsNext={xIsNext}
+            squares={currentSquares}
+            isFreezeClicked={isFreezeClicked}
+            setIsFreezeClicked={setIsFreezeClicked}
+            onPlay={handlePlay}
+          />
+        </div>
+        <div className="game-info">
+          <ol>{moves}</ol>
+        </div>
       </div>
-      <div className="game-info">
-        <ol>{moves}</ol>
+      <div className="freeze-container">
+        <button onClick={handleFreezeButtonClick}>Freeze</button>
+        {isFreezeClicked && <p>Select a square to freeze</p>}
       </div>
-    </div>
+    </>
   );
 }
 //copied
@@ -119,8 +240,12 @@ function calculateWinner(squares) {
   ];
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+    if (
+      squares[a].value &&
+      squares[a].value === squares[b].value &&
+      squares[a].value === squares[c].value
+    ) {
+      return squares[a].value;
     }
   }
   return null;

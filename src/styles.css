@@ -73,13 +73,14 @@ body {
 
 .board-row:after {
   clear: both;
-  content: '';
+  content: "";
   display: table;
 }
 
 .status {
   margin-bottom: 10px;
 }
+
 .game {
   display: flex;
   flex-direction: row;
@@ -87,4 +88,17 @@ body {
 
 .game-info {
   margin-left: 20px;
+}
+
+.freeze-container {
+  margin-left: 15px;
+  margin-top: 30px;
+}
+
+.freeze-container button {
+  width: 40px;
+  height: 35px;
+  background-color: #87b8ec;
+  color: white;
+  font-size: 10px;
 }
