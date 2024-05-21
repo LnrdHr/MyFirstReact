@@ -1,7 +1,7 @@
 React tutorial
 -------------------------------------------------------------
-Following official React tutorial - creating Tic-tac-toe game
-I added a few rules to this well know game.
+Following the official React tutorial - creating Tic-tac-toe game
+I added a few rules to this well known game.
 
 Rules of the Alterative Tic-tac-toe: 
 -you can overwrite cells
