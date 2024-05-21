@@ -1,4 +1,5 @@
-#React tutorial
+React tutorial
+-------------------------------------------------------------
 Following official React tutorial - creating Tic-tac-toe game
 I added a few rules to this well know game.
 
